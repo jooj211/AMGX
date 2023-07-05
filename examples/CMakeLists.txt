@@ -143,3 +143,19 @@ install(TARGETS amgx_capi DESTINATION "lib/examples")
 if(MPI_FOUND)
   install(TARGETS amgx_mpi_capi amgx_mpi_capi_agg amgx_mpi_capi_cla amgx_mpi_poisson7 DESTINATION "lib/examples")
 endif(MPI_FOUND)
+
+#MEU_TESTE2
+ADD_EXECUTABLE(meu_teste2 meu_teste2.cpp)
+
+set(AMGX_INCLUDES ${THRUST_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../base/include ${CMAKE_CURRENT_SOURCE_DIR}/../core/include)
+target_include_directories( meu_teste2 PUBLIC ${AMGX_INCLUDES})
+target_link_libraries ( meu_teste2 ${dyn_libs} )
+
+IF(WIN32)
+    IF(MSVC)
+      set_source_files_properties( meu_teste2.cpp PROPERTIES LANGUAGE CXX)
+      set_target_properties ( meu_teste2 PROPERTIES LINKER_LANGUAGE CXX )
+    ENDIF(MSVC)
+ELSE(WIN32)
+  SET_SOURCE_FILES_PROPERTIES( meu_teste2.cpp PROPERTIES COMPILE_FLAGS -std=c++0x )
+ENDIF(WIN32)

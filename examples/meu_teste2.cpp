@@ -4,6 +4,7 @@
 #include "amgx_c.h"
 #endif
 
+#include <string>
 #include <stdio.h>
 #include <amgx_c.h>
 #include <iostream>
@@ -14,7 +15,75 @@
 
 using namespace std;
 
-void gerarMatrizS(double stepSize)
+void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln, double stepSize)
+{
+    double a = -1, b = 1; // intervalo
+
+    double alfa = 2.0;
+    double beta = 2.0;
+
+    int numeroPontos = ((b - a) / stepSize) + 1;
+    cout << "numeroPontos: " << numeroPontos << endl;
+
+    int n = numeroPontos - 2;
+
+    double h = stepSize * stepSize;
+
+    int nnz = 3 * n - 2; // elementos não-nulos - n+(n-1)+(n-1) = 3n-2
+
+    int *row_ptrs = new int[n+1];
+    int *col_indices = new int[nnz];
+    double *values = new double[nnz];
+    double *rhs_values = new double[n];
+    double *soln_values = new double[n]();
+
+    row_ptrs[0] = 0;
+    int index = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        if (i > 0)
+        {
+            col_indices[index] = i - 1;
+            values[index] = -1.0;
+            index++;
+        }
+
+        col_indices[index] = i;
+        values[index] = 2.0;
+        index++;
+
+        if (i < n - 1)
+        {
+            col_indices[index] = i + 1;
+            values[index] = -1.0;
+            index++;
+        }
+
+        row_ptrs[i+1] = index;
+    }
+
+    double vd = -h * 2.0 + alfa;
+
+    rhs_values[0] = vd;
+    for (int i = 1; i < n - 1; i++)
+    {
+        rhs_values[i] = -2.0 * h;
+    }
+    rhs_values[n-1] = vd;
+
+    AMGX_matrix_upload_all(matrix, n, nnz, 1, 1, row_ptrs, col_indices, values, NULL);
+    AMGX_vector_upload(rhs, n, 1, rhs_values);
+    AMGX_vector_upload(soln, n, 1, soln_values);
+
+    delete[] row_ptrs;
+    delete[] col_indices;
+    delete[] values;
+    delete[] rhs_values;
+    delete[] soln_values;
+}
+
+void gerarMatrizArquivo(double stepSize)
 {
 
     double a = -1, b = 1; // intervalo
@@ -86,16 +155,25 @@ void gerarMatrizS(double stepSize)
     arquivoMtx.close();
 }
 
+
 void calcular(const char **argv, double stepSize)
 {
-    //cout << "Arquivo matrix: " << argv[2] << endl;
-    //cout << "Config: " << argv[4] << endl;
-   
-    //cout << "STEP SIZE: " << stepSize << endl;
-    gerarMatrizS(stepSize);
+    /*
+        0 -> nome do programa
+        1 -> -c
+        2 -> arquivo config
+        3 -> -s
+        4 -> stepSize
+    */
+
+    // cout << "Config: " << argv[2] << endl;
+
+    // cout << "STEP SIZE: " << stepSize << endl;
 
     AMGX_initialize();
-    
+
+    // gerarMatrizArquivo(stepSize);
+
     // All of the objects are initialized using a default Resources.
     AMGX_matrix_handle matrix;
     AMGX_vector_handle rhs;
@@ -105,7 +183,7 @@ void calcular(const char **argv, double stepSize)
     AMGX_config_handle config;
 
     // arquivo de configuração passado como parametro: ../src/configs/FGMRES_AGGREGATION_JACOBI.json
-    AMGX_config_create_from_file(&config, argv[4]);
+    AMGX_config_create_from_file(&config, argv[2]);
     AMGX_resources_create_simple(&rsrc, config);
 
     AMGX_matrix_create(&matrix, rsrc, AMGX_mode_dDDI);
@@ -124,9 +202,10 @@ void calcular(const char **argv, double stepSize)
 
     // Next, data is uploaded from the application (or set, in the case of the solution vector which is initialized to all zeroes).
     //  If these are not specified than rhs=[1,...,1]^T and (initial guess) sol=[0,...,0]^T.
-    AMGX_read_system(matrix, rhs, soln, argv[2]);
+    gerarMatrizS(matrix, rhs, soln, stepSize);
+    // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
 
-    //AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
+    // AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
     AMGX_solver_setup(solver, matrix);
 
     AMGX_solver_solve_with_0_initial_guess(solver, rhs, soln);
@@ -147,7 +226,7 @@ void calcular(const char **argv, double stepSize)
     }
     plotSol << 2 <<endl;
     plotSol.close();
-    
+
     AMGX_solver_destroy(solver);
     AMGX_vector_destroy(soln);
     AMGX_vector_destroy(rhs);
@@ -157,39 +236,73 @@ void calcular(const char **argv, double stepSize)
     AMGX_SAFE_CALL(AMGX_config_destroy(config));
     AMGX_SAFE_CALL(AMGX_finalize());
 
-    delete [] data;
+    delete[] data;
 }
 
 int main(int argc, const char **argv)
 {
+    // exemplo de chamada: examples/meu_teste2 -c ../src/configs/FGMRES_AGGREGATION.json -s 0.002
     /*
-     g++ gerarMatriz.cpp  -o gerarMtx && ./gerarMtx 9 && rm gerarMtx && make -j16 all && examples/meu_teste2 -m ../examples/matrix3.mtx -c ../src/configs/FGMRES_AGGREGATION.json
-     g++ ../examples/gerarMatriz.cpp  -o gerarMtx && ./gerarMtx 1000 && rm gerarMtx && make -j16 all && examples/meu_teste2 -m ../examples/matrix3.mtx -c ../src/configs/FGMRES_AGGREGATION.json
-     make -j16 all && examples/meu_teste2 -m ../examples/matrix3.mtx -c ../src/configs/FGMRES_AGGREGATION.json -n 9
-     
-     make -j16 all && examples/meu_teste2 -m ../examples/matrix3.mtx -c ../src/configs/FGMRES_AGGREGATION.json -s 0.025
-     make -j16 all && examples/meu_teste2 -m ../examples/matrix3.mtx -c ../src/configs/FGMRES_AGGREGATION.json -n 9
-     */
+        0 -> nome do programa
+        1 -> -c
+        2 -> arquivo config
+        3 -> -s
+        4 -> stepSize
+    */
 
-    //cout << "Arquivo matrix: " << argv[2] << endl;
-    //cout << "Config: " << argv[4] << endl;
+    // cout << "Config: " << argv[2] << endl;
     int numeroPontos;
     double stepSize;
-    istringstream ss(argv[6]);
-    if (std::string(argv[5]) == "-n")
+    istringstream ss(argv[4]);
+    if (std::string(argv[3]) == "-n")
     {
         ss >> numeroPontos;
+        // cout << "Número Pontos: " << numeroPontos << endl;
+        // gerarMatrizN(numeroPontos);
     }
-    else if (std::string(argv[5]) == "-s")
+    else if (std::string(argv[3]) == "-s")
     {
         ss >> stepSize;
-
+        cout << "Step Size: " << stepSize << endl;
+        // gerarMatrizS(stepSize);
     }
 
+    ofstream normaL2;
+    normaL2.open("normaL2.csv");
+    normaL2 << "stepSize"
+            << ","
+            << "l2_error" << endl;
+    normaL2.close();
+
+    // for (int i = 10; i >= 0; i--)
+    // {
+    //     calcular(argv, stepSize);
+    //     stepSize = stepSize / 2.0;
+    // }
+
+    // stepSize = 1e-6;
     calcular(argv, stepSize);
+
     stepSize = stepSize / 2.0;
 
-    //system("python ../examples/plotSol.py");
+    int integerValue = std::floor(1 / stepSize);
+
+    std::string str = std::to_string(integerValue + 1);
+
+    std::string methodArg = argv[2];
+    std::string ssizeArg = argv[4];
+
+    // Extract the method name
+    size_t startPos = methodArg.find("../src/configs/") + 15; // Length of "../src/configs/"
+    size_t endPos = methodArg.find(".json");
+    std::string method = methodArg.substr(startPos, endPos - startPos);
+
+    // Extract the step size
+    std::string ssize = ssizeArg;
+
+    std::string command = "python ../python/plotSol.py " + str + " " + method + " " + ssize;
+
+    system(command.c_str());
 
     return 0;
 }

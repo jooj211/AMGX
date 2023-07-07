@@ -11,12 +11,12 @@ output_folder = "output_3"
 method_files = os.listdir(method_folder)
 total_files = len(method_files)
 
+# Change the working directory to "../build"
+os.chdir("../build")
+
 # Create the output directory if it doesn't exist
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
-
-# Change the working directory to "../build"
-os.chdir("../build")
 
 # Counter to track progress
 counter = 0

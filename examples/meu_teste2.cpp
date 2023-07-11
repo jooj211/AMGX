@@ -363,13 +363,6 @@ int main(int argc, const char **argv)
         // gerarMatrizS(stepSize);
     }
 
-    ofstream normaL2;
-    normaL2.open("normaL2.csv");
-    normaL2 << "stepSize"
-            << ","
-            << "l2_error" << endl;
-    normaL2.close();
-
     // for (int i = 10; i >= 0; i--)
     // {
     //     calcular(argv, stepSize);
@@ -381,24 +374,24 @@ int main(int argc, const char **argv)
 
     stepSize = stepSize / 2.0;
 
-    int integerValue = std::floor(1 / stepSize);
+    //int integerValue = std::floor(1 / stepSize);
 
-    std::string str = std::to_string(integerValue + 1);
+    //std::string str = std::to_string(integerValue + 1);
 
-    std::string methodArg = argv[2];
-    std::string ssizeArg = argv[4];
+    //std::string methodArg = argv[2];
+    //std::string ssizeArg = argv[4];
 
     // Extract the method name
-    size_t startPos = methodArg.find("../src/configs/") + 15; // Length of "../src/configs/"
-    size_t endPos = methodArg.find(".json");
-    std::string method = methodArg.substr(startPos, endPos - startPos);
+    //size_t startPos = methodArg.find("../src/configs/") + 15; // Length of "../src/configs/"
+    //size_t endPos = methodArg.find(".json");
+    //std::string method = methodArg.substr(startPos, endPos - startPos);
 
     // Extract the step size
-    std::string ssize = ssizeArg;
+    //std::string ssize = ssizeArg;
 
-    std::string command = "python ../python/plotSol.py " + str + " " + method + " " + ssize;
+    //std::string command = "python ../python/plotSol.py " + str + " " + method + " " + ssize;
 
-    system(command.c_str());
+    //system(command.c_str());
 
     return 0;
 }

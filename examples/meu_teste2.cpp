@@ -15,6 +15,100 @@
 
 using namespace std;
 
+void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln)
+{
+    string filename = "csr_matrix.txt";
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    int nnz = 0;
+    int n = 0;
+    std::string line;
+
+    // Read ia: (number of values)
+    std::getline(file, line);
+    line = line.substr(3);
+    n = std::stoi(line);
+
+    // Allocate memory for the arrays
+    int *row_ptrs = new int[n + 1];
+
+    // Read ia: (integer values separated by spaces)
+    std::getline(file, line);
+    std::istringstream iss(line);
+    for (int i = 0; i < n + 1; i++)
+    {
+        iss >> row_ptrs[i];
+    }
+
+    // Read ja: (integer values separated by spaces)
+    std::getline(file, line);
+    line = line.substr(3);
+    nnz = std::stoi(line);
+
+    int *col_indices = new int[nnz];
+    double *values = new double[nnz];
+
+    iss.clear();
+    std::getline(file, line);
+    iss.str(line);
+
+    for (int i = 0; i < nnz; i++)
+    {
+        iss >> col_indices[i];
+    }
+
+    // Read values: (double values separated by spaces)
+    iss.clear();
+    std::getline(file, line);
+    std::getline(file, line);
+    iss.str(line);
+
+    for (int i = 0; i < nnz; i++)
+    {
+        iss >> values[i];
+    }
+
+    file.close();
+
+    AMGX_matrix_upload_all(matrix, n, nnz, 1, 1, row_ptrs, col_indices, values, NULL);
+
+    delete[] row_ptrs;
+    delete[] col_indices;
+    delete[] values;
+
+    // Read rhs: (double values separated by newlines)
+    double *rhs_values = new double[n + 1];
+    double *soln_values = new double[n + 1];
+
+    std::ifstream rhs_file("rhs.txt");
+    if (!rhs_file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        rhs_file >> rhs_values[i];
+    }
+
+    rhs_file.close();
+
+    // Soln is initialized to 0
+    for (int i = 0; i < n; i++)
+    {
+        soln_values[i] = 0.0;
+    }
+
+    AMGX_vector_upload(rhs, n, 1, rhs_values);
+    AMGX_vector_upload(soln, n, 1, soln_values);
+}
+
 void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln, double stepSize)
 {
     double a = -1, b = 1; // intervalo
@@ -31,7 +125,7 @@ void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector
 
     int nnz = 3 * n - 2; // elementos não-nulos - n+(n-1)+(n-1) = 3n-2
 
-    int *row_ptrs = new int[n+1];
+    int *row_ptrs = new int[n + 1];
     int *col_indices = new int[nnz];
     double *values = new double[nnz];
     double *rhs_values = new double[n];
@@ -60,7 +154,7 @@ void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector
             index++;
         }
 
-        row_ptrs[i+1] = index;
+        row_ptrs[i + 1] = index;
     }
 
     double vd = -h * 2.0 + alfa;
@@ -70,11 +164,13 @@ void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector
     {
         rhs_values[i] = -2.0 * h;
     }
-    rhs_values[n-1] = vd;
+    rhs_values[n - 1] = vd;
 
     AMGX_matrix_upload_all(matrix, n, nnz, 1, 1, row_ptrs, col_indices, values, NULL);
     AMGX_vector_upload(rhs, n, 1, rhs_values);
     AMGX_vector_upload(soln, n, 1, soln_values);
+
+    
 
     delete[] row_ptrs;
     delete[] col_indices;
@@ -102,20 +198,20 @@ void gerarMatrizArquivo(double stepSize)
     int n = numeroPontos - 2;
 
     // double stepSize = (b - a) / (numeroPontos - 1); // valor de cada incremento, 9 pontos mas 8 intervalos
-    //cout << "n: " << n << endl;
-    //cout << "STEP SIZE: " << stepSize << endl;
+    // cout << "n: " << n << endl;
+    // cout << "STEP SIZE: " << stepSize << endl;
 
     double h = stepSize * stepSize;
-    //cout << "h: " << h << endl;
+    // cout << "h: " << h << endl;
 
     int nnz = 3 * n - 2; // elementos não-nulos - n+(n-1)+(n-1) = 3n-2
-    //cout << "NNZ: " << nnz << endl;
+    // cout << "NNZ: " << nnz << endl;
     int countI = 1, countF = 3;
 
     ofstream arquivoMtx;
 
     arquivoMtx.open("../examples/matrix3.mtx");
-    arquivoMtx <<fixed<< scientific << setprecision(15);
+    arquivoMtx << fixed << scientific << setprecision(15);
     arquivoMtx << "%%MatrixMarket matrix coordinate real general symmetric" << endl;
     arquivoMtx << "%%AMGX 1 1 sorted rhs" << endl;
     arquivoMtx << n << " " << n << " " << nnz << endl;
@@ -143,7 +239,7 @@ void gerarMatrizArquivo(double stepSize)
     arquivoMtx << n << " " << n << " " << 2.0 << endl;
 
     double vd = -h * 2.0 + alfa;
-    //cout << "RHS: " << vd << endl;
+    // cout << "RHS: " << vd << endl;
 
     arquivoMtx << vd << endl;
     for (int i = 0; i < n - 2; i++)
@@ -154,7 +250,6 @@ void gerarMatrizArquivo(double stepSize)
 
     arquivoMtx.close();
 }
-
 
 void calcular(const char **argv, double stepSize)
 {
@@ -202,8 +297,9 @@ void calcular(const char **argv, double stepSize)
 
     // Next, data is uploaded from the application (or set, in the case of the solution vector which is initialized to all zeroes).
     //  If these are not specified than rhs=[1,...,1]^T and (initial guess) sol=[0,...,0]^T.
-    gerarMatrizS(matrix, rhs, soln, stepSize);
+    // gerarMatrizS(matrix, rhs, soln, stepSize);
     // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
+    readCSRMatrix(matrix, rhs, soln);
 
     // AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
     AMGX_solver_setup(solver, matrix);
@@ -218,13 +314,13 @@ void calcular(const char **argv, double stepSize)
     ofstream plotSol;
 
     plotSol.open("plotSol.csv");
-    plotSol << 2 <<endl;
+    plotSol << 2 << endl;
     for (int i = 0; i < sol_size; ++i)
     {
-        //printf("%f \n",data[i]);
-        plotSol << data[i]<<endl;
+        // printf("%f \n",data[i]);
+        plotSol << data[i] << endl;
     }
-    plotSol << 2 <<endl;
+    plotSol << 2 << endl;
     plotSol.close();
 
     AMGX_solver_destroy(solver);

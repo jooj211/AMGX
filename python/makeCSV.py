@@ -1,6 +1,8 @@
 import os
 import re
+import sys
 import csv
+import subprocess
 
 def parse_file(file_path):
     data = {}
@@ -20,12 +22,10 @@ def parse_file(file_path):
 
 def main():
     os.chdir("../build")
-    output_path = './output_3'
+    output_path = './output_' + sys.argv[1]
     output_files = os.listdir(output_path)
 
     parsed_data = []
-    total_files = len(output_files)
-    counter = 0
 
     for file in output_files:
         if file.endswith('.txt'):
@@ -33,7 +33,7 @@ def main():
 
     os.chdir("csv")
 
-    with open('summary_3.csv', 'w', newline='') as csvfile:
+    with open('summary_' + sys.argv[1] + '.csv', 'w', newline='') as csvfile:
         fieldnames = ['method', 'number_of_points', 'levels', 'total_memory_usage', 'total_iterations', 'final_residual', 'total_time']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -43,3 +43,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    command = ['python', 'makeSheets.py', sys.argv[1]]
+    subprocess.run(command)

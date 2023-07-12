@@ -1,12 +1,14 @@
+import sys
 import os
 import subprocess
 
 executable = "examples/meu_teste2"
 method_flag = "-c"
+# method_folder = "../src/methods"
 method_folder = "../src/configs"
 step_flag = "-s"
-step_size = "0.0002"
-output_folder = "output_3"
+step_size = sys.argv[1]
+output_folder = "output_" + step_size
 
 method_files = os.listdir(method_folder)
 total_files = len(method_files)
@@ -36,3 +38,7 @@ for method_file in method_files:
     counter += 1
     progress = (counter / total_files) * 100
     print(f"Progress: {progress:.2f}%")
+    
+
+command = ['python', 'makeCSV.py', sys.argv[1]]
+subprocess.run(command)

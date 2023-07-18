@@ -82,8 +82,8 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     delete[] values;
 
     // Read rhs: (double values separated by newlines)
-    double *rhs_values = new double[n + 1];
-    double *soln_values = new double[n + 1];
+    double *rhs_values = new double[n];
+    double *soln_values = new double[n];
 
     std::ifstream rhs_file("rhs.txt");
     if (!rhs_file.is_open())
@@ -301,7 +301,8 @@ void calcular(const char **argv, double stepSize)
     // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
     readCSRMatrix(matrix, rhs, soln);
 
-    // AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
+    AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
+
     AMGX_solver_setup(solver, matrix);
 
     AMGX_solver_solve_with_0_initial_guess(solver, rhs, soln);

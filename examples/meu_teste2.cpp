@@ -22,7 +22,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     if (!file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
-        return;
+        exit(1);
     }
 
     int nnz = 0;
@@ -40,9 +40,10 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     // Read ia: (integer values separated by spaces)
     std::getline(file, line);
     std::istringstream iss(line);
-    for (int i = 0; i < n + 1; i++)
+    for (int i = 0; i < n; i++)
     {
         iss >> row_ptrs[i];
+        row_ptrs[i] -= 1;
     }
 
     // Read ja: (integer values separated by spaces)
@@ -60,6 +61,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     for (int i = 0; i < nnz; i++)
     {
         iss >> col_indices[i];
+        col_indices[i] -= 1;
     }
 
     // Read values: (double values separated by spaces)
@@ -89,7 +91,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     if (!rhs_file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
-        return;
+        exit(1);
     }
 
     for (int i = 0; i < n; i++)
@@ -302,7 +304,7 @@ void calcular(const char **argv, double stepSize)
     readCSRMatrix(matrix, rhs, soln);
 
     AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
-
+    
     AMGX_solver_setup(solver, matrix);
 
     AMGX_solver_solve_with_0_initial_guess(solver, rhs, soln);
@@ -315,13 +317,13 @@ void calcular(const char **argv, double stepSize)
     ofstream plotSol;
 
     plotSol.open("plotSol.csv");
-    plotSol << 2 << endl;
+    //plotSol << 2 << endl;
     for (int i = 0; i < sol_size; ++i)
     {
         // printf("%f \n",data[i]);
         plotSol << data[i] << endl;
     }
-    plotSol << 2 << endl;
+    // plotSol << 2 << endl;
     plotSol.close();
 
     AMGX_solver_destroy(solver);
@@ -339,6 +341,7 @@ void calcular(const char **argv, double stepSize)
 int main(int argc, const char **argv)
 {
     // exemplo de chamada: examples/meu_teste2 -c ../src/configs/FGMRES_AGGREGATION.json -s 0.002
+    // make && examples/meu_teste2 -c ../src/configs/GMRES_AMG_D2.json -s 0.002
     /*
         0 -> nome do programa
         1 -> -c

@@ -111,6 +111,25 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     AMGX_vector_upload(soln, n, 1, soln_values);
 }
 
+void readSolution(double *solution, int size)
+{
+    string filename = "solution.txt";
+    std::ifstream solution_file("solution.txt");
+    
+    if (!solution_file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        exit(1);
+    }
+
+    for (int i = 0; i < size-1; i++)
+    {
+        solution_file >> solution[i];
+    }
+
+    solution_file.close();
+}
+
 void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln, double stepSize)
 {
     double a = -1, b = 1; // intervalo
@@ -313,16 +332,23 @@ void calcular(const char **argv, double stepSize)
 
     int sol_size, sol_bsize;
     AMGX_vector_get_size(soln, &sol_size, &sol_bsize);
+    
+    double *solution = new double[sol_size];
+    readSolution(solution, sol_size);
 
     ofstream plotSol;
 
     plotSol.open("plotSol.csv");
     //plotSol << 2 << endl;
+    double errAcc = 0;
     for (int i = 0; i < sol_size; ++i)
     {
         // printf("%f \n",data[i]);
+        // plotSol << data[i]<<","<<solution[i]<<","<<pow(solution[i]- data[i],2)<< endl;
         plotSol << data[i] << endl;
+        errAcc += pow(solution[i]- data[i],2);
     }
+    //plotSol << "Erro: "<<errAcc << endl;
     // plotSol << 2 << endl;
     plotSol.close();
 

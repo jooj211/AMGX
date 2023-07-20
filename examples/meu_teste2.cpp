@@ -17,7 +17,7 @@ using namespace std;
 
 void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln)
 {
-    string filename = "csr_matrix.txt";
+    std::string filename = "csr_matrix.txt";
     std::ifstream file(filename);
     if (!file.is_open())
     {
@@ -33,6 +33,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     std::getline(file, line);
     line = line.substr(3);
     n = std::stoi(line);
+    n -= 1;
 
     // Allocate memory for the arrays
     int *row_ptrs = new int[n + 1];
@@ -40,7 +41,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     // Read ia: (integer values separated by spaces)
     std::getline(file, line);
     std::istringstream iss(line);
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i <= n; i++)
     {
         iss >> row_ptrs[i];
         row_ptrs[i] -= 1;

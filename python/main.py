@@ -1,10 +1,8 @@
 import subprocess
 
-command = ['python', 'runFiles.py', '1']
+#command = ['python', 'runFiles.py', 'cube-poisson']
+
+#command = ['python', 'runFiles.py', 've-mech']
+
+command = ['python', 'runFiles.py', 've-poisson']
 subprocess.run(command)
-
-#command = ['python', 'runFiles.py', '0.00002']
-#subprocess.run(command)
-
-#command = ['python', 'runFiles.py', '0.000002']
-#subprocess.run(command)

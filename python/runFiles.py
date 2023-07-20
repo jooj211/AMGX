@@ -6,9 +6,9 @@ executable = "examples/meu_teste2"
 method_flag = "-c"
 # method_folder = "../src/methods"
 method_folder = "../src/configs"
-step_flag = "-s"
-step_size = sys.argv[1]
-output_folder = "output_" + step_size
+problem_flag = "-p"
+problem = sys.argv[1]
+output_folder = "output_" + problem
 
 method_files = os.listdir(method_folder)
 total_files = len(method_files)
@@ -25,7 +25,7 @@ counter = 0
 
 for method_file in method_files:
     method_path = os.path.join(method_folder, method_file)
-    command = [executable, method_flag, method_path, step_flag, step_size]
+    command = [executable, method_flag, method_path, problem_flag, problem]
 
     # Define the output file path within the output folder
     output_file = os.path.join(output_folder, f"{method_file}.txt")

@@ -39,6 +39,6 @@ for method_file in method_files:
     progress = (counter / total_files) * 100
     print(f"Progress: {progress:.2f}%")
     
-
+os.chdir("../python")
 command = ['python', 'makeCSV.py', sys.argv[1]]
 subprocess.run(command)

@@ -1,6 +1,6 @@
 import subprocess
 
-command = ['python', 'runFiles.py', '0.0002']
+command = ['python', 'runFiles.py', '1']
 subprocess.run(command)
 
 #command = ['python', 'runFiles.py', '0.00002']

@@ -43,5 +43,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    os.chdir("../../python")
     command = ['python', 'makeSheets.py', sys.argv[1]]
     subprocess.run(command)

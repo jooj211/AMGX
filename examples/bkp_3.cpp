@@ -15,10 +15,9 @@
 
 using namespace std;
 
-void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln, std::string problem)
+void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln)
 {
-    std::string path = "problems/" + problem + "/";
-    std::string filename = path + "csr_matrix.txt";
+    std::string filename = "csr_matrix.txt";
     std::ifstream file(filename);
     if (!file.is_open())
     {
@@ -52,7 +51,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     std::getline(file, line);
     line = line.substr(3);
     nnz = std::stoi(line);
-    cout << nnz << endl;
+
     int *col_indices = new int[nnz];
     double *values = new double[nnz];
 
@@ -89,8 +88,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     double *rhs_values = new double[n];
     double *soln_values = new double[n];
 
-    filename = path + "rhs.txt";
-    std::ifstream rhs_file(filename);
+    std::ifstream rhs_file("rhs.txt");
     if (!rhs_file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -114,19 +112,18 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     AMGX_vector_upload(soln, n, 1, soln_values);
 }
 
-
 void readSolution(double *solution, int size)
 {
     string filename = "solution.txt";
     std::ifstream solution_file("solution.txt");
-
+    
     if (!solution_file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
         exit(1);
     }
 
-    for (int i = 0; i < size - 1; i++)
+    for (int i = 0; i < size-1; i++)
     {
         solution_file >> solution[i];
     }
@@ -194,6 +191,8 @@ void gerarMatrizS(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector
     AMGX_matrix_upload_all(matrix, n, nnz, 1, 1, row_ptrs, col_indices, values, NULL);
     AMGX_vector_upload(rhs, n, 1, rhs_values);
     AMGX_vector_upload(soln, n, 1, soln_values);
+
+    
 
     delete[] row_ptrs;
     delete[] col_indices;
@@ -320,102 +319,12 @@ void calcular(const char **argv, double stepSize)
 
     // Next, data is uploaded from the application (or set, in the case of the solution vector which is initialized to all zeroes).
     //  If these are not specified than rhs=[1,...,1]^T and (initial guess) sol=[0,...,0]^T.
-    gerarMatrizS(matrix, rhs, soln, stepSize);
-    // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
-    //readCSRMatrix(matrix, rhs, soln);
-
-    AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
-
-    AMGX_solver_setup(solver, matrix);
-
-    AMGX_solver_solve_with_0_initial_guess(solver, rhs, soln);
-
-    AMGX_vector_download(soln, data);
-
-    int sol_size, sol_bsize;
-    AMGX_vector_get_size(soln, &sol_size, &sol_bsize);
-
-    double *solution = new double[sol_size];
-    readSolution(solution, sol_size);
-
-    ofstream plotSol;
-
-    plotSol.open("plotSol.csv");
-    // plotSol << 2 << endl;
-    double errAcc = 0;
-    for (int i = 0; i < sol_size; ++i)
-    {
-        // printf("%f \n",data[i]);
-        // plotSol << data[i]<<","<<solution[i]<<","<<pow(solution[i]- data[i],2)<< endl;
-        plotSol << data[i] << endl;
-        errAcc += pow(solution[i] - data[i], 2);
-    }
-    // plotSol << "Erro: "<<errAcc << endl;
-    //  plotSol << 2 << endl;
-    plotSol.close();
-
-    AMGX_solver_destroy(solver);
-    AMGX_vector_destroy(soln);
-    AMGX_vector_destroy(rhs);
-    AMGX_matrix_destroy(matrix);
-    AMGX_resources_destroy(rsrc);
-
-    AMGX_SAFE_CALL(AMGX_config_destroy(config));
-    AMGX_SAFE_CALL(AMGX_finalize());
-
-    delete[] data;
-}
-
-void calcular(const char **argv, string problem)
-{
-    /*
-        0 -> nome do programa
-        1 -> -c
-        2 -> arquivo config
-        3 -> -p
-        4 -> problem
-    */
-
-    // cout << "Config: " << argv[2] << endl;
-
-    // cout << "Problem: " << problem << endl;
-
-    AMGX_initialize();
-
-    // All of the objects are initialized using a default Resources.
-    AMGX_matrix_handle matrix;
-    AMGX_vector_handle rhs;
-    AMGX_vector_handle soln;
-    AMGX_resources_handle rsrc;
-    AMGX_solver_handle solver;
-    AMGX_config_handle config;
-
-    // arquivo de configuração passado como parametro: ../src/configs/FGMRES_AGGREGATION_JACOBI.json
-    AMGX_config_create_from_file(&config, argv[2]);
-    AMGX_resources_create_simple(&rsrc, config);
-
-    AMGX_matrix_create(&matrix, rsrc, AMGX_mode_dDDI);
-    AMGX_vector_create(&rhs, rsrc, AMGX_mode_dDDI);
-    AMGX_vector_create(&soln, rsrc, AMGX_mode_dDDI);
-
-    double *data = new double[100000000];
-
-    /*
-        1 d -> the first letter h or d specifies whether the matrix data (and subsequent linear solver algorithms) will run on the host or device
-        2 D(or F) -> specifies the precision (double or float) of the Matrix data
-        3 D The third D or F specifies the precision (double or float) of any Vector (including right-hand side or unknown vectors)
-        4 I The last I specifies that 32-bit int types are used for all indices
-    */
-    AMGX_solver_create(&solver, rsrc, AMGX_mode_dDDI, config);
-
-    // Next, data is uploaded from the application (or set, in the case of the solution vector which is initialized to all zeroes).
-    //  If these are not specified than rhs=[1,...,1]^T and (initial guess) sol=[0,...,0]^T.
     // gerarMatrizS(matrix, rhs, soln, stepSize);
     // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
-    readCSRMatrix(matrix, rhs, soln, problem);
+    readCSRMatrix(matrix, rhs, soln);
 
-    // AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
-
+    AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
+    
     AMGX_solver_setup(solver, matrix);
 
     AMGX_solver_solve_with_0_initial_guess(solver, rhs, soln);
@@ -424,24 +333,24 @@ void calcular(const char **argv, string problem)
 
     int sol_size, sol_bsize;
     AMGX_vector_get_size(soln, &sol_size, &sol_bsize);
-
+    
     double *solution = new double[sol_size];
     readSolution(solution, sol_size);
 
     ofstream plotSol;
 
     plotSol.open("plotSol.csv");
-    // plotSol << 2 << endl;
+    //plotSol << 2 << endl;
     double errAcc = 0;
     for (int i = 0; i < sol_size; ++i)
     {
         // printf("%f \n",data[i]);
         // plotSol << data[i]<<","<<solution[i]<<","<<pow(solution[i]- data[i],2)<< endl;
         plotSol << data[i] << endl;
-        errAcc += pow(solution[i] - data[i], 2);
+        errAcc += pow(solution[i]- data[i],2);
     }
-    // plotSol << "Erro: "<<errAcc << endl;
-    //  plotSol << 2 << endl;
+    //plotSol << "Erro: "<<errAcc << endl;
+    // plotSol << 2 << endl;
     plotSol.close();
 
     AMGX_solver_destroy(solver);
@@ -458,7 +367,7 @@ void calcular(const char **argv, string problem)
 
 int main(int argc, const char **argv)
 {
-    // exemplo de chamada: examples/meu_teste2 -c ../src/configs/FGMRES_AGGREGATION.json -p cube-poisson
+    // exemplo de chamada: examples/meu_teste2 -c ../src/configs/FGMRES_AGGREGATION.json -s 0.002
     // make && examples/meu_teste2 -c ../src/configs/GMRES_AMG_D2.json -s 0.002
     /*
         0 -> nome do programa
@@ -483,13 +392,6 @@ int main(int argc, const char **argv)
         ss >> stepSize;
         cout << "Step Size: " << stepSize << endl;
         // gerarMatrizS(stepSize);
-        calcular(argv, stepSize);
-    }
-    else if (std::string(argv[3]) == "-p")
-    {
-        std::string problem = argv[4];
-        cout << "Solving problem: " << problem << endl;
-        calcular(argv, problem);
     }
 
     // for (int i = 10; i >= 0; i--)
@@ -499,28 +401,28 @@ int main(int argc, const char **argv)
     // }
 
     // stepSize = 1e-6;
+    calcular(argv, stepSize);
 
-    //stepSize = stepSize / 2.0;
+    stepSize = stepSize / 2.0;
 
-    // int integerValue = std::floor(1 / stepSize);
+    //int integerValue = std::floor(1 / stepSize);
 
-    // std::string str = std::to_string(integerValue + 1);
+    //std::string str = std::to_string(integerValue + 1);
 
-    // std::string methodArg = argv[2];
-    // std::string ssizeArg = argv[4];
+    //std::string methodArg = argv[2];
+    //std::string ssizeArg = argv[4];
 
     // Extract the method name
-    // size_t startPos = methodArg.find("../src/configs/") + 15; // Length of "../src/configs/"
-    // size_t endPos = methodArg.find(".json");
-    // std::string method = methodArg.substr(startPos, endPos - startPos);
+    //size_t startPos = methodArg.find("../src/configs/") + 15; // Length of "../src/configs/"
+    //size_t endPos = methodArg.find(".json");
+    //std::string method = methodArg.substr(startPos, endPos - startPos);
 
     // Extract the step size
-    // std::string ssize = ssizeArg;
+    //std::string ssize = ssizeArg;
 
-    // std::string command = "python ../python/plotSol.py " + str + " " + method + " " + ssize;
+    //std::string command = "python ../python/plotSol.py " + str + " " + method + " " + ssize;
 
-    // system(command.c_str());
+    //system(command.c_str());
 
     return 0;
 }
-

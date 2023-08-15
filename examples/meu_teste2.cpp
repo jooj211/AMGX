@@ -17,7 +17,7 @@ using namespace std;
 
 void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vector_handle soln)
 {
-    std::string filename = "csr_matrix.txt";
+    std::string filename = "csr_matrix_ve_poisson2.txt";
     std::ifstream file(filename);
     if (!file.is_open())
     {
@@ -78,6 +78,14 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
 
     file.close();
 
+    /*
+        n: The dimension of the matrix in terms of block-units.
+        nnz: The number of non-zero entries in the CSR matrix, in terms of block units
+        block_dimx: The blocksize in x direction
+        block_dimy: The blocksize in y direction.
+        row_ptrs: Array of indices into the col indices structure.
+        col_indices: Array of the column index of the nonzero blocks in the matrix.
+    */
     AMGX_matrix_upload_all(matrix, n, nnz, 1, 1, row_ptrs, col_indices, values, NULL);
 
     delete[] row_ptrs;
@@ -88,7 +96,7 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
     double *rhs_values = new double[n];
     double *soln_values = new double[n];
 
-    std::ifstream rhs_file("rhs.txt");
+    std::ifstream rhs_file("rhs_ve_poisson2.txt");
     if (!rhs_file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -114,8 +122,8 @@ void readCSRMatrix(AMGX_matrix_handle matrix, AMGX_vector_handle rhs, AMGX_vecto
 
 void readSolution(double *solution, int size)
 {
-    string filename = "solution.txt";
-    std::ifstream solution_file("solution.txt");
+    string filename = "solution_ve_poisson2.txt";
+    std::ifstream solution_file(filename);
     
     if (!solution_file.is_open())
     {
@@ -123,7 +131,7 @@ void readSolution(double *solution, int size)
         exit(1);
     }
 
-    for (int i = 0; i < size-1; i++)
+    for (int i = 0; i < size; i++)
     {
         solution_file >> solution[i];
     }
@@ -323,7 +331,7 @@ void calcular(const char **argv, double stepSize)
     // AMGX_read_system(matrix, rhs, soln, "../examples/matrix3.mtx");
     readCSRMatrix(matrix, rhs, soln);
 
-    AMGX_write_system(matrix, rhs, soln, "./output.system.mtx");
+    AMGX_write_system(matrix, rhs, soln, "./output_ve_poisson2.mtx");
     
     AMGX_solver_setup(solver, matrix);
 
@@ -337,19 +345,20 @@ void calcular(const char **argv, double stepSize)
     double *solution = new double[sol_size];
     readSolution(solution, sol_size);
 
-    ofstream plotSol;
+    ofstream plotSol, csvSol;
 
     plotSol.open("plotSol.csv");
     //plotSol << 2 << endl;
     double errAcc = 0;
     for (int i = 0; i < sol_size; ++i)
     {
+        csvSol<<solution[i]<<endl;
         // printf("%f \n",data[i]);
-        // plotSol << data[i]<<","<<solution[i]<<","<<pow(solution[i]- data[i],2)<< endl;
-        plotSol << data[i] << endl;
-        errAcc += pow(solution[i]- data[i],2);
+        plotSol << data[i]<<","<<solution[i]<<","<<pow(solution[i]- data[i],2)<< endl;
+        // plotSol << data[i] << endl;
+        errAcc += pow(solution[i] - data[i], 2);
     }
-    //plotSol << "Erro: "<<errAcc << endl;
+    cout << "Erro Acumulado: "<<sqrt(errAcc) << endl;
     // plotSol << 2 << endl;
     plotSol.close();
 

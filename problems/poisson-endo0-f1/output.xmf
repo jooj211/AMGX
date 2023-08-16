@@ -1,0 +1,122 @@
+<?xml version="1.0" ?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="2.0">
+  <Domain>
+
+    <Topology TopologyType="Tetrahedron"
+        NumberOfElements="20655">
+    <DataItem Format="HDF" 
+        DataType="Int"  
+        Dimensions="20655 4">output.h5:/topology/connectivity
+    </DataItem>
+    </Topology>
+
+    <Geometry GeometryType="XYZ">
+        <DataItem Dimensions="5602 3"
+            NumberType="Double" 
+            Precision="8" 
+            Format="HDF">output.h5:/geometry/coordinates
+        </DataItem>
+    </Geometry>
+
+    <Grid Name="TimeSeries" 
+        GridType="Collection"
+        CollectionType="Temporal">
+        <Time TimeType="List">
+            <DataItem  Format="HDF" 
+                NumberType="Double" 
+                Dimensions="1">output.h5:/time
+            </DataItem>
+        </Time>
+        <Grid Name="T0" GridType="Uniform">
+            <Topology Reference="/Xdmf/Domain/Topology[1]"/>
+            <Geometry Reference="/Xdmf/Domain/Geometry[1]"/>
+            <Attribute Name="vm" 
+                AttributeType="Scalar" 
+                Center="Node">
+            <DataItem ItemType="HyperSlab" 
+                Dimensions="1 5602" 
+                Type="HyperSlab">
+                <DataItem Dimensions="3 2" Format="XML">
+                    0 0 
+                    1 1 
+                    1 5602
+                </DataItem>
+                <DataItem Name="Points" 
+                    Dimensions="1 5602" 
+                    Format="HDF">output.h5:/vertex_field/vm
+                </DataItem>
+            </DataItem>
+            </Attribute>
+            <Attribute Name="stress" 
+                AttributeType="Scalar" 
+                Center="Cell">
+            <DataItem ItemType="HyperSlab" 
+                Dimensions="1 20655" 
+                Type="HyperSlab">
+                <DataItem Dimensions="3 2" Format="XML">
+                    0 0 
+                    1 1 
+                    1 20655
+                </DataItem>
+                <DataItem Name="Cells" 
+                    Dimensions="1 20655" 
+                    Format="HDF">output.h5:/vertex_field/stress
+                </DataItem>
+            </DataItem>
+            </Attribute>
+            <Attribute Name="strain" 
+                AttributeType="Scalar" 
+                Center="Cell">
+            <DataItem ItemType="HyperSlab" 
+                Dimensions="1 20655" 
+                Type="HyperSlab">
+                <DataItem Dimensions="3 2" Format="XML">
+                    0 0 
+                    1 1 
+                    1 20655
+                </DataItem>
+                <DataItem Name="Cells" 
+                    Dimensions="1 20655" 
+                    Format="HDF">output.h5:/vertex_field/strain
+                </DataItem>
+            </DataItem>
+            </Attribute>
+            <Attribute Name="aha_marker" 
+                AttributeType="Scalar" 
+                Center="Cell">
+            <DataItem ItemType="HyperSlab" 
+                Dimensions="1 20655" 
+                Type="HyperSlab">
+                <DataItem Dimensions="3 2" Format="XML">
+                    0 0 
+                    1 1 
+                    1 20655
+                </DataItem>
+                <DataItem Name="Cells" 
+                    Dimensions="1 20655" 
+                    Format="HDF">output.h5:/vertex_field/aha_marker
+                </DataItem>
+            </DataItem>
+            </Attribute>
+            <Attribute Name="displacement" 
+                AttributeType="Vector" 
+                Center="Node">
+            <DataItem ItemType="HyperSlab" 
+                Dimensions="1 5602 3" 
+                Type="HyperSlab">
+                <DataItem Dimensions="3 3" Format="XML">
+                    0 0 0 
+                    1 1 1 
+                    1 5602 3
+                </DataItem>
+                <DataItem Name="Points" 
+                    Dimensions="1 5602 3" 
+                    Format="HDF">output.h5:/vertex_field/displacements
+                </DataItem>
+            </DataItem>
+            </Attribute>
+        </Grid>
+    </Grid>
+  </Domain>
+</Xdmf>

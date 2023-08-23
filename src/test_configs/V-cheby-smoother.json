@@ -12,7 +12,7 @@
         "coarse_solver": "NOSOLVER",
         "print_solve_stats": 1, 
         "obtain_timings": 1, 
-        "max_iters": 200, 
+        "max_iters": 400, 
         "monitor_residual": 1, 
         "convergence": "ABSOLUTE", 
         "max_levels": 100, 
